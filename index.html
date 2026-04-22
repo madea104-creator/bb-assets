@@ -3,83 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的資產總覽</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>我的資產總覽 - 終極修復版</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#1a2030; --surface:#232d3f; --border:#3a4d65;
-    --accent:#f5d87a; --text:#f0f4fa; --dim:#b8cfe0;
+    --bg:#1a2030; --surface:#232d3f; --border:#4a5d75;
+    --accent:#f5d87a; --text:#ffffff; --dim:#b8cfe0;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;padding:20px}
   .app{max-width:500px;margin:0 auto}
-  header{margin-bottom:30px;border-bottom:1px solid var(--border);padding-bottom:10px}
-  .hero{background:var(--surface);border-radius:16px;padding:30px;margin-bottom:20px;border:1px solid var(--border);text-align:center}
-  .hero-amount{font-size:40px;color:var(--accent);margin-top:10px;font-family:'DM Mono',monospace}
+  .hero{background:var(--surface);border-radius:16px;padding:30px;margin-bottom:20px;border:2px solid var(--border);text-align:center}
+  .hero-amount{font-size:36px;color:var(--accent);margin-top:10px}
   .asset-card{background:var(--surface);border-radius:12px;padding:15px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;padding:20px}
+  
+  /* 彈窗樣式修正：強制亮色底黑字，避免手機深色模式干擾 */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100;align-items:center;justify-content:center;padding:15px}
   .modal-overlay.open{display:flex}
-  .modal{background:var(--surface);padding:25px;border-radius:16px;width:100%;max-width:400px;border:1px solid var(--border)}
-  .form-group{margin-bottom:15px}
-  label{display:block;margin-bottom:5px;font-size:14px;color:var(--dim)}
-  input, select{width:100%;background:var(--bg);border:1px solid var(--border);padding:12px;color:var(--text);border-radius:8px;font-size:16px}
-  .btn-primary{width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-top:10px}
+  .modal{background:#ffffff;padding:25px;border-radius:16px;width:100%;max-width:400px;color:#000000}
+  .modal h3{color:#1a2030;margin-bottom:20px;font-size:22px}
+  
+  .form-group{margin-bottom:18px}
+  label{display:block;margin-bottom:8px;font-size:14px;color:#444444;font-weight:700}
+  
+  /* 選單與輸入框：強制白色底黑色字 */
+  input, select {
+    width:100%;
+    background:#f0f2f5 !important;
+    border:2px solid #ccc !important;
+    padding:14px;
+    color:#000000 !important;
+    border-radius:8px;
+    font-size:16px;
+    -webkit-appearance: none; /* 移除 iOS 預設樣式 */
+  }
+
+  .btn-save{width:100%;padding:16px;background:#f5d87a;color:#1a2030;border:none;border-radius:8px;font-weight:700;font-size:18px;cursor:pointer}
+  .btn-cancel{width:100%;background:transparent;border:none;color:#666;margin-top:15px;font-size:16px}
 </style>
 </head>
 <body>
 <div class="app">
-  <header><h1 style="color:var(--accent)">Wealth Tracker</h1></header>
   <div class="hero">
-    <div style="font-size:13px;color:var(--dim)">總資產淨值</div>
+    <div style="font-size:14px;color:var(--dim)">總資產淨值 (TWD)</div>
     <div class="hero-amount" id="totalValue">NT$ 0</div>
   </div>
   <div id="list"></div>
-  <button style="width:100%;padding:15px;background:transparent;border:1px dashed var(--border);color:var(--dim);border-radius:12px;margin-top:20px" onclick="openModal()">＋ 新增資產 (存款/股票/CB)</button>
+  <button style="width:100%;padding:18px;background:var(--accent);color:#1a2030;border:none;border-radius:12px;font-weight:700;margin-top:20px" onclick="openModal()">＋ 新增資產項目</button>
 </div>
 
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3 style="margin-bottom:20px">新增資產項目</h3>
+    <h3>新增資產</h3>
     <div class="form-group">
       <label>資產名稱</label>
-      <input id="name" placeholder="例: 台積電 / 中信存款">
+      <input id="name" placeholder="例: 台積電 / 國泰美金存款">
     </div>
     <div class="form-group">
       <label>資產類別</label>
       <select id="type" onchange="updateUI()">
-        <option value="tw">台灣股票 (輸入代號)</option>
-        <option value="us">美國股票 (輸入代號)</option>
-        <option value="cash">台幣存款 (直接填金額)</option>
-        <option value="fxcash">外幣存款 (選幣別)</option>
-        <option value="cb">可轉債 CB (輸入5碼代號)</option>
+        <option value="cash">💰 台幣存款 (填總額)</option>
+        <option value="fxcash">💵 外幣存款 (選幣別)</option>
+        <option value="tw">📈 台灣股票 (填代號)</option>
+        <option value="us">🇺🇸 美國股票 (填代號)</option>
+        <option value="cb">📄 可轉債 CB (填5碼)</option>
       </select>
     </div>
-    <div id="tickerRow" class="form-group">
-      <label>代號 / 數量</label>
+    
+    <div id="tickerRow" class="form-group" style="display:none">
+      <label>代號與數量</label>
       <div style="display:flex;gap:10px">
         <input id="ticker" placeholder="代號" style="flex:1">
         <input id="qty" type="number" placeholder="股數/張數" style="flex:1">
       </div>
     </div>
+    
     <div id="fxRow" class="form-group" style="display:none">
-      <label>幣別 / 金額</label>
+      <label>幣別與外幣金額</label>
       <div style="display:flex;gap:10px">
         <select id="ccy" style="flex:1"><option value="USD">USD 美金</option><option value="JPY">JPY 日圓</option></select>
         <input id="fxAmt" type="number" placeholder="金額" style="flex:1">
       </div>
     </div>
-    <div id="cashRow" class="form-group" style="display:none">
-      <label>存款總金額 (NT$)</label>
-      <input id="amount" type="number" placeholder="請輸入金額">
+    
+    <div id="cashRow" class="form-group">
+      <label>存款總額 (NT$)</label>
+      <input id="amount" type="number" placeholder="請輸入台幣金額">
     </div>
-    <button class="btn-primary" onclick="save()">儲存資產</button>
-    <button style="width:100%;background:transparent;border:none;color:var(--dim);margin-top:15px" onclick="closeModal()">取消</button>
+    
+    <button class="btn-save" onclick="save()">儲存資產</button>
+    <button class="btn-cancel" onclick="closeModal()">取消</button>
   </div>
 </div>
 
 <script>
-let assets = JSON.parse(localStorage.getItem('my_assets_v4') || '[]');
-const rates = { USD: 32.5, JPY: 0.21 };
+// 數據與匯率 (2026-04-22 參考匯率)
+let assets = JSON.parse(localStorage.getItem('my_assets_final') || '[]');
+const rates = { USD: 32.5, JPY: 0.211 };
 
 function updateUI() {
   const t = document.getElementById('type').value;
@@ -92,7 +112,7 @@ function render() {
   const list = document.getElementById('list');
   list.innerHTML = '';
   let total = 0;
-  assets.forEach((a, i) => {
+  assets.forEach((a) => {
     let v = 0;
     if(a.type==='cash') v = a.amount;
     else if(a.type==='fxcash') v = a.fxAmt * rates[a.ccy];
@@ -101,7 +121,7 @@ function render() {
     total += v;
     list.innerHTML += `<div class="asset-card">
       <div><div>${a.name}</div><small style="color:var(--dim)">${a.type==='cash'?'現金':a.ticker}</small></div>
-      <div style="text-align:right"><div>NT$ ${Math.round(v).toLocaleString()}</div><small style="color:var(--accent)">${a.price || ''}</small></div>
+      <div style="text-align:right"><div>NT$ ${Math.round(v).toLocaleString()}</div></div>
     </div>`;
   });
   document.getElementById('totalValue').textContent = 'NT$ ' + Math.round(total).toLocaleString();
@@ -122,17 +142,17 @@ async function save() {
     price: 0
   };
   
-  if(a.type==='tw'||a.type==='us'||a.type==='cb') {
+  if(['tw','us','cb'].includes(a.type)) {
     try {
       const sym = a.type === 'us' ? a.ticker : a.ticker + '.TW';
       const r = await fetch(`https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${sym}`);
       const d = await r.json();
       a.price = d.chart.result[0].meta.regularMarketPrice;
-    } catch(e) { a.price = prompt('自動抓取失敗，請輸入今日價格:'); }
+    } catch(e) { a.price = prompt('價格更新較慢，請手動輸入當前價格:'); }
   }
   
   assets.push(a);
-  localStorage.setItem('my_assets_v4', JSON.stringify(assets));
+  localStorage.setItem('my_assets_final', JSON.stringify(assets));
   closeModal();
   render();
 }
