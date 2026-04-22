@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>資產總覽 - 5347 專修版</title>
+<title>資產總覽 - 穩定修復版</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -13,214 +13,112 @@
     --pos:#5ecfb0; --neg:#f07a60; --shadow:0 8px 32px rgba(0,0,0,.4);
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:400;font-size:16px;min-height:100vh;overflow-x:hidden}
-  .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 24px}
-  header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;min-height:100vh}
+  .app{max-width:1100px;margin:0 auto;padding:40px 24px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px;border-bottom:1px solid var(--border);padding-bottom:20px}
   .logo{font-family:'Playfair Display',serif;font-size:32px;color:var(--accent)}
-  .logo span{color:var(--muted);font-size:13px;font-family:'DM Mono',monospace;display:block;margin-top:2px;letter-spacing:.1em}
-  .refresh-btn{padding:8px 18px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--accent);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
-  .refresh-btn:hover{background:rgba(245,216,122,0.1)}
-  .refresh-btn.loading .spin{animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .hero{background:linear-gradient(135deg,var(--surface) 0%,#1a2535 100%);border:1px solid var(--border);border-radius:16px;padding:44px 52px;margin-bottom:32px;box-shadow:var(--shadow)}
-  .hero-amount{font-family:'Playfair Display',serif;font-size:54px;font-weight:700;color:var(--accent);line-height:1.2}
-  .chart-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 32px; }
-  #historyChart { width: 100% !important; height: 200px !important; }
-  .asset-group{margin-bottom:24px}
-  .asset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .price-tag{font-family:'DM Mono',monospace;font-size:12px;padding:3px 8px;border-radius:4px;background:rgba(94,207,176,0.1);color:var(--accent2);margin-left:10px}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center}
-  .modal-overlay.open{display:flex}
-  .modal{background:var(--surface);padding:30px;border-radius:16px;width:90%;max-width:450px}
-  .form-input,.form-select{width:100%;background:var(--bg);border:1px solid var(--border);padding:12px;color:#fff;border-radius:8px;margin-bottom:15px}
-  .btn-primary{width:100%;background:var(--accent);color:#000;padding:12px;border-radius:8px;cursor:pointer;border:none;font-weight:bold}
-  .del-btn{background:transparent;color:var(--neg);border:none;cursor:pointer;font-size:12px}
+  .hero{background:linear-gradient(135deg,var(--surface) 0%,#1a2535 100%);border:1px solid var(--border);border-radius:16px;padding:44px;margin-bottom:32px;box-shadow:var(--shadow)}
+  .hero-amount{font-family:'Playfair Display',serif;font-size:54px;color:var(--accent)}
+  .refresh-btn{padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace}
+  .asset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .price-tag{font-family:'DM Mono',monospace;font-size:12px;padding:3px 8px;border-radius:4px;background:rgba(94,207,176,.1);color:var(--accent2)}
+  .price-tag.loading{color:var(--muted);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.3}}
+  .add-btn{width:100%;padding:15px;background:transparent;border:1px dashed var(--border);border-radius:12px;color:var(--dim);cursor:pointer;margin-top:20px}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div class="logo">資產追蹤<span>WEALTH TRACKER</span></div>
-    <div class="header-right"><button class="refresh-btn" id="refBtn" onclick="refreshAll()"><span class="spin">↻</span> 更新報價</button></div>
+    <div class="logo">Wealth Tracker</div>
+    <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
   </header>
-  
   <div class="hero">
-    <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--dim);margin-bottom:10px">NET WORTH</div>
-    <div class="hero-amount" id="netWorthDisplay">NT$0</div>
+    <div style="font-size:13px;color:var(--dim);margin-bottom:10px">NET WORTH</div>
+    <div class="hero-amount" id="netWorthDisplay">NT$ 0</div>
   </div>
-
-  <div class="chart-container">
-    <canvas id="historyChart"></canvas>
-  </div>
-
-  <div id="groupsContainer"></div>
-  <button onclick="openModal()" style="width:100%;padding:15px;background:transparent;border:1px dashed var(--border);color:var(--dim);border-radius:12px;cursor:pointer">＋ 新增資產或股票</button>
+  <div id="assetList"></div>
+  <button class="add-btn" onclick="addNewAsset()">＋ 新增資產或股票</button>
 </div>
 
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <h3 style="margin-bottom:20px;color:var(--accent)">新增資產</h3>
-    <input class="form-input" id="inputName" placeholder="名稱 (例: 世界先進)">
-    <input class="form-input" id="inputTicker" placeholder="代號 (例: 5347)">
-    <input class="form-input" id="inputQty" type="number" placeholder="持有數量 (股)">
-    <select class="form-select" id="inputTT">
-      <option value="tw">台股</option>
-      <option value="us">美股</option>
-      <option value="manual">手動金額 (不連網)</option>
-    </select>
-    <input class="form-input" id="inputAmount" type="number" placeholder="若手動，請輸入總金額">
-    <button class="btn-primary" onclick="saveAsset()">儲存資產</button>
-    <button onclick="closeModal()" style="width:100%;background:transparent;color:var(--muted);border:none;margin-top:10px;cursor:pointer">取消</button>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const CF_WORKER = 'https://wild-hill-ee8c.madea104.workers.dev';
-let assets = JSON.parse(localStorage.getItem('wt_assets_v4') || '[]');
-let stockPrices = {};
-let historyData = JSON.parse(localStorage.getItem('wt_history') || '[]');
-let fxUSD = 32.5;
+// 使用更穩定的公用 Proxy
+const CF_WORKER = 'https://corsproxy.io/?'; 
 
-async function proxyFetch(url) {
-  const r = await fetch(`${CF_WORKER}?url=${encodeURIComponent(url)}&t=${Date.now()}`);
-  if (!r.ok) throw new Error();
-  return await r.json();
-}
+let assets = JSON.parse(localStorage.getItem('wt_assets_v3') || '[]');
+let fxRates = { USD: 32.5, JPY: 0.21 }; // 預設匯率
 
-// 核心修復：針對 5347 進行多次備援嘗試
-async function fetchTwPrice(ticker) {
-  // 1. 嘗試上市 API
+async function fetchPrice(a) {
+  const tag = document.getElementById(`tag-${a.id}`);
+  if(tag) tag.className = 'price-tag loading';
+
   try {
-    const d = await proxyFetch(`https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_AVG?stockNo=${ticker}`);
-    if (d && d.length) {
-      stockPrices[ticker] = { price: parseFloat(d[d.length-1].ClosingPrice), currency: 'TWD' };
-      return true;
+    let url = '';
+    if(a.type === 'tw') url = `https://query1.finance.yahoo.com/v8/finance/chart/${a.ticker}.TW`;
+    else if(a.type === 'us') url = `https://query1.finance.yahoo.com/v8/finance/chart/${a.ticker}`;
+    
+    const r = await fetch(CF_WORKER + encodeURIComponent(url));
+    const d = await r.json();
+    const price = d.chart.result[0].meta.regularMarketPrice;
+    
+    a.currentPrice = price;
+    if(tag) {
+      tag.textContent = `P: ${price}`;
+      tag.className = 'price-tag';
     }
-  } catch(e) {}
-
-  // 2. 嘗試 Yahoo 上櫃後綴 (.TWO) -> 這是世界先進(5347)最可能的解藥
-  try {
-    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}.TWO?interval=1m&range=1d`);
-    if (d.chart.result) {
-      stockPrices[ticker] = { price: d.chart.result[0].meta.regularMarketPrice, currency: 'TWD' };
-      return true;
+  } catch (e) {
+    if(tag) {
+      tag.textContent = '需手動更新';
+      tag.className = 'price-tag';
     }
-  } catch(e) {}
-
-  // 3. 嘗試 Yahoo 上市後綴 (.TW)
-  try {
-    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}.TW?interval=1m&range=1d`);
-    if (d.chart.result) {
-      stockPrices[ticker] = { price: d.chart.result[0].meta.regularMarketPrice, currency: 'TWD' };
-      return true;
-    }
-  } catch(e) {}
-  
-  return false;
-}
-
-async function fetchUsPrice(ticker) {
-  try {
-    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1m&range=1d`);
-    stockPrices[ticker] = { price: d.chart.result[0].meta.regularMarketPrice, currency: 'USD' };
-    return true;
-  } catch(e) { return false; }
-}
-
-async function refreshAll() {
-  document.getElementById('refBtn').classList.add('loading');
-  try {
-    const fx = await proxyFetch('https://open.er-api.com/v6/latest/TWD');
-    fxUSD = 1/fx.rates.USD;
-    for (let a of assets) {
-      if (a.tt === 'tw' && a.ticker) await fetchTwPrice(a.ticker);
-      if (a.tt === 'us' && a.ticker) await fetchUsPrice(a.ticker);
-    }
-  } catch (e) {}
+  }
   render();
-  document.getElementById('refBtn').classList.remove('loading');
 }
 
 function render() {
-  const con = document.getElementById('groupsContainer');
-  con.innerHTML = '';
+  const list = document.getElementById('assetList');
+  list.innerHTML = '';
   let total = 0;
 
-  assets.forEach((a, idx) => {
-    let val = a.amount || 0;
-    let pTag = '';
-    if (a.ticker && stockPrices[a.ticker]) {
-      const p = stockPrices[a.ticker];
-      val = p.price * (a.qty || 0);
-      if (p.currency === 'USD') val *= fxUSD;
-      pTag = `<span class="price-tag">${p.price.toFixed(1)}</span>`;
-    }
-    total += val;
-    
-    const card = document.createElement('div');
-    card.className = 'asset-card';
-    card.innerHTML = `
-      <div><strong>${a.name}</strong> ${pTag}</div>
-      <div class="asset-right">
-        <div>NT$${Math.round(val).toLocaleString()}</div>
-        <button class="del-btn" onclick="delAsset(${idx})">刪除</button>
+  assets.forEach(a => {
+    let value = (a.currentPrice || 0) * (a.qty || 0);
+    if(a.type === 'us') value *= fxRates.USD;
+    total += value;
+
+    const div = document.createElement('div');
+    div.className = 'asset-card';
+    div.innerHTML = `
+      <div>
+        <div style="font-weight:500">${a.name} (${a.ticker})</div>
+        <span class="price-tag" id="tag-${a.id}">${a.currentPrice ? 'P: '+a.currentPrice : '載入中...'}</span>
       </div>
+      <div style="font-family:'DM Mono',monospace">NT$ ${Math.round(value).toLocaleString()}</div>
     `;
-    con.appendChild(card);
+    list.appendChild(div);
   });
-
-  document.getElementById('netWorthDisplay').textContent = 'NT$' + Math.round(total).toLocaleString();
-  recordHistory(total);
+  document.getElementById('netWorthDisplay').textContent = 'NT$ ' + Math.round(total).toLocaleString();
 }
 
-function recordHistory(nw) {
-  const date = new Date().toLocaleDateString();
-  if (nw <= 0) return;
-  if (!historyData.length || historyData[historyData.length-1].date !== date) {
-    historyData.push({ date, value: nw });
-    if (historyData.length > 30) historyData.shift();
-    localStorage.setItem('wt_history', JSON.stringify(historyData));
-  }
-  renderChart();
-}
-
-let myChart = null;
-function renderChart() {
-  const ctx = document.getElementById('historyChart').getContext('2d');
-  if (myChart) myChart.destroy();
-  myChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: historyData.map(d => d.date.split('/')[2] + '日'),
-      datasets: [{ data: historyData.map(d => d.value), borderColor: '#f5d87a', backgroundColor: 'rgba(245,216,122,0.1)', fill: true, tension: 0.3 }]
-    },
-    options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8fa8c0' } } } }
-  });
-}
-
-function openModal() { document.getElementById('modalOverlay').classList.add('open'); }
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-function saveAsset() {
-  const a = {
-    name: document.getElementById('inputName').value,
-    ticker: document.getElementById('inputTicker').value,
-    qty: parseFloat(document.getElementById('inputQty').value) || 0,
-    tt: document.getElementById('inputTT').value,
-    amount: parseFloat(document.getElementById('inputAmount').value) || 0
-  };
-  assets.push(a);
-  localStorage.setItem('wt_assets_v4', JSON.stringify(assets));
-  closeModal(); refreshAll();
-}
-function delAsset(idx) {
-  if(confirm('確定刪除？')) {
-    assets.splice(idx, 1);
-    localStorage.setItem('wt_assets_v4', JSON.stringify(assets));
-    render();
+function addNewAsset() {
+  const name = prompt("名稱 (例如: 台積電)");
+  const ticker = prompt("代號 (例如: 2330 或 NVDA)");
+  const qty = prompt("持有數量");
+  const type = prompt("類型 (輸入 tw 或 us)");
+  
+  if(name && ticker && qty) {
+    const newAsset = { id: Date.now(), name, ticker, qty: parseFloat(qty), type: type || 'tw' };
+    assets.push(newAsset);
+    localStorage.setItem('wt_assets_v3', JSON.stringify(assets));
+    fetchPrice(newAsset);
   }
 }
-refreshAll();
+
+function refreshAll() {
+  assets.forEach(a => fetchPrice(a));
+}
+
+render();
+if(assets.length > 0) refreshAll();
 </script>
 </body>
 </html>
