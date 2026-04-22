@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>資產總覽 - 走勢與修復版</title>
+<title>資產總覽 - 5347 專修版</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -14,198 +14,169 @@
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:400;font-size:16px;min-height:100vh;overflow-x:hidden}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(30,45,61,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(30,45,61,.3) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
   .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 24px}
   header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
   .logo{font-family:'Playfair Display',serif;font-size:32px;color:var(--accent)}
   .logo span{color:var(--muted);font-size:13px;font-family:'DM Mono',monospace;display:block;margin-top:2px;letter-spacing:.1em}
-  .header-right{text-align:right}
-  .date-display{font-family:'DM Mono',monospace;font-size:14px;color:var(--dim);letter-spacing:.08em}
-  .refresh-row{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:6px}
-  .refresh-btn{padding:5px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;letter-spacing:.06em}
-  .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .refresh-btn{padding:8px 18px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--accent);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+  .refresh-btn:hover{background:rgba(245,216,122,0.1)}
   .refresh-btn.loading .spin{animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .last-updated{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
-  .status-bar{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
-  .status-pill{padding:5px 14px;border-radius:20px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.06em;display:flex;align-items:center;gap:6px;color:var(--dim)}
-  .sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
-  .sdot.ok{background:var(--pos);box-shadow:0 0 6px var(--pos)}
-  .sdot.loading{background:var(--accent);animation:pulse 1s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-  .hero{background:linear-gradient(135deg,var(--surface) 0%,#1a2535 100%);border:1px solid var(--border);border-radius:16px;padding:44px 52px;margin-bottom:32px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
-  .hero-label{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:12px}
-  .hero-amount{font-family:'Playfair Display',serif;font-size:64px;font-weight:700;color:var(--accent);letter-spacing:-.02em;line-height:1}
-  .hero-sub{display:flex;gap:32px;margin-top:20px;flex-wrap:wrap}
-  .hero-stat .label{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
-  .hero-stat .value{font-family:'DM Mono',monospace;font-size:18px;color:var(--text)}
-  .hero-stat .value.neg{color:var(--neg)}
-  .chart-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 32px; box-shadow: var(--shadow); }
-  #historyChart { width: 100% !important; height: 250px !important; }
-  .fx-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 28px;margin-bottom:32px;box-shadow:var(--shadow)}
-  .fx-grid{display:flex;flex-wrap:wrap;gap:10px}
-  .fx-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:flex;flex-direction:column;gap:2px;min-width:100px}
-  .alloc-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:32px;box-shadow:var(--shadow)}
-  .bar-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;display:flex;margin-bottom:16px}
-  .bar-seg{height:100%;transition:width .6s ease}
-  .tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
-  .tab{padding:10px 20px;border-radius:40px;font-family:'DM Mono',monospace;font-size:14px;cursor:pointer;border:1px solid var(--border);color:var(--dim);background:transparent}
-  .tab.active{background:var(--accent);color:var(--bg);font-weight:500}
-  .asset-group{margin-bottom:28px}
-  .group-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  .asset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:grid;grid-template-columns:1fr auto;align-items:center;margin-bottom:8px}
-  .asset-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-right:14px}
-  .asset-right{text-align:right;min-width:120px}
-  .price-tag{font-family:'DM Mono',monospace;font-size:11px;padding:3px 7px;border-radius:4px;background:rgba(94,207,176,.1);color:var(--accent2)}
-  .add-btn{width:100%;padding:14px;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--dim);cursor:pointer;margin-top:8px}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+  .hero{background:linear-gradient(135deg,var(--surface) 0%,#1a2535 100%);border:1px solid var(--border);border-radius:16px;padding:44px 52px;margin-bottom:32px;box-shadow:var(--shadow)}
+  .hero-amount{font-family:'Playfair Display',serif;font-size:54px;font-weight:700;color:var(--accent);line-height:1.2}
+  .chart-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 32px; }
+  #historyChart { width: 100% !important; height: 200px !important; }
+  .asset-group{margin-bottom:24px}
+  .asset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .price-tag{font-family:'DM Mono',monospace;font-size:12px;padding:3px 8px;border-radius:4px;background:rgba(94,207,176,0.1);color:var(--accent2);margin-left:10px}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center}
   .modal-overlay.open{display:flex}
-  .modal{background:var(--surface);padding:32px;border-radius:16px;width:90%;max-width:500px}
-  .form-input,.form-select{width:100%;background:var(--bg);border:1px solid var(--border);padding:12px;color:#fff;border-radius:8px;margin-bottom:12px}
-  .btn-primary{background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;cursor:pointer;border:none}
+  .modal{background:var(--surface);padding:30px;border-radius:16px;width:90%;max-width:450px}
+  .form-input,.form-select{width:100%;background:var(--bg);border:1px solid var(--border);padding:12px;color:#fff;border-radius:8px;margin-bottom:15px}
+  .btn-primary{width:100%;background:var(--accent);color:#000;padding:12px;border-radius:8px;cursor:pointer;border:none;font-weight:bold}
+  .del-btn{background:transparent;color:var(--neg);border:none;cursor:pointer;font-size:12px}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="logo">資產追蹤<span>WEALTH TRACKER</span></div>
-    <div class="header-right"><div id="dateDisplay" class="date-display"></div><button class="refresh-btn" onclick="refreshAll()"><span class="spin">↻</span> 更新報價</button></div>
+    <div class="header-right"><button class="refresh-btn" id="refBtn" onclick="refreshAll()"><span class="spin">↻</span> 更新報價</button></div>
   </header>
-  <div class="status-bar">
-    <div class="status-pill"><div class="sdot" id="dot-twse"></div><span>台股</span></div>
-    <div class="status-pill"><div class="sdot" id="dot-us"></div><span>美股</span></div>
-    <div class="status-pill"><div class="sdot" id="dot-fx"></div><span>匯率</span></div>
-  </div>
+  
   <div class="hero">
-    <div class="hero-label">總淨資產</div>
-    <div class="hero-amount" id="netWorthDisplay">—</div>
-    <div class="hero-sub">
-      <div class="hero-stat"><div class="label">總資產</div><div class="value" id="totalAssetsDisplay">—</div></div>
-      <div class="hero-stat"><div class="label">總負債</div><div class="value" id="totalDebtDisplay" style="color:var(--neg)">—</div></div>
-    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--dim);margin-bottom:10px">NET WORTH</div>
+    <div class="hero-amount" id="netWorthDisplay">NT$0</div>
   </div>
+
   <div class="chart-container">
-    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:10px">資產成長走勢 (30日)</div>
     <canvas id="historyChart"></canvas>
   </div>
-  <div class="fx-panel">
-    <div class="fx-grid" id="fxGrid">
-      <div class="fx-chip"><div>USD</div><div id="fx-USD" style="font-size:18px">—</div></div>
-      <div class="fx-chip"><div>JPY</div><div id="fx-JPY" style="font-size:18px">—</div></div>
-    </div>
-  </div>
+
   <div id="groupsContainer"></div>
+  <button onclick="openModal()" style="width:100%;padding:15px;background:transparent;border:1px dashed var(--border);color:var(--dim);border-radius:12px;cursor:pointer">＋ 新增資產或股票</button>
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h3 style="margin-bottom:20px">新增資產</h3>
-    <input class="form-input" id="inputName" placeholder="名稱 (如: 世界先進)">
-    <select class="form-select" id="inputCategory" onchange="onCatChange()">
-      <option value="cash">台幣存款</option>
-      <option value="invest">投資 (股票/幣)</option>
-      <option value="debt">負債</option>
+    <h3 style="margin-bottom:20px;color:var(--accent)">新增資產</h3>
+    <input class="form-input" id="inputName" placeholder="名稱 (例: 世界先進)">
+    <input class="form-input" id="inputTicker" placeholder="代號 (例: 5347)">
+    <input class="form-input" id="inputQty" type="number" placeholder="持有數量 (股)">
+    <select class="form-select" id="inputTT">
+      <option value="tw">台股</option>
+      <option value="us">美股</option>
+      <option value="manual">手動金額 (不連網)</option>
     </select>
-    <div id="investSection" style="display:none">
-      <input class="form-input" id="inputTicker" placeholder="代號 (如: 5347)">
-      <input class="form-input" id="inputQty" type="number" placeholder="數量">
-      <select class="form-select" id="inputTT">
-        <option value="tw">台股</option>
-        <option value="us">美股</option>
-      </select>
-    </div>
-    <input class="form-input" id="inputAmount" type="number" placeholder="金額 (手動輸入用)">
+    <input class="form-input" id="inputAmount" type="number" placeholder="若手動，請輸入總金額">
     <button class="btn-primary" onclick="saveAsset()">儲存資產</button>
-    <button onclick="closeModal()" style="background:transparent;color:#8fa8c0;border:none;margin-left:10px;cursor:pointer">取消</button>
+    <button onclick="closeModal()" style="width:100%;background:transparent;color:var(--muted);border:none;margin-top:10px;cursor:pointer">取消</button>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const CF_WORKER = 'https://wild-hill-ee8c.madea104.workers.dev';
-let assets = JSON.parse(localStorage.getItem('wt_assets_v3') || '[]');
-let fxRates = { USD: 32.5, JPY: 0.21 };
+let assets = JSON.parse(localStorage.getItem('wt_assets_v4') || '[]');
 let stockPrices = {};
 let historyData = JSON.parse(localStorage.getItem('wt_history') || '[]');
+let fxUSD = 32.5;
 
 async function proxyFetch(url) {
   const r = await fetch(`${CF_WORKER}?url=${encodeURIComponent(url)}&t=${Date.now()}`);
+  if (!r.ok) throw new Error();
   return await r.json();
 }
 
-async function fetchYahoo(symbol, cacheKey, currency) {
-  try {
-    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`);
-    const meta = d.chart.result[0].meta;
-    stockPrices[cacheKey] = { price: meta.regularMarketPrice, currency: currency || meta.currency };
-    return true;
-  } catch { return false; }
-}
-
-async function fetchTwseOne(ticker) {
+// 核心修復：針對 5347 進行多次備援嘗試
+async function fetchTwPrice(ticker) {
+  // 1. 嘗試上市 API
   try {
     const d = await proxyFetch(`https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_AVG?stockNo=${ticker}`);
     if (d && d.length) {
       stockPrices[ticker] = { price: parseFloat(d[d.length-1].ClosingPrice), currency: 'TWD' };
       return true;
     }
-  } catch {}
-  // 5347 類上櫃股票備援
-  return await fetchYahoo(`${ticker}.TW`, ticker, 'TWD') || await fetchYahoo(`${ticker}.TWO`, ticker, 'TWD');
+  } catch(e) {}
+
+  // 2. 嘗試 Yahoo 上櫃後綴 (.TWO) -> 這是世界先進(5347)最可能的解藥
+  try {
+    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}.TWO?interval=1m&range=1d`);
+    if (d.chart.result) {
+      stockPrices[ticker] = { price: d.chart.result[0].meta.regularMarketPrice, currency: 'TWD' };
+      return true;
+    }
+  } catch(e) {}
+
+  // 3. 嘗試 Yahoo 上市後綴 (.TW)
+  try {
+    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}.TW?interval=1m&range=1d`);
+    if (d.chart.result) {
+      stockPrices[ticker] = { price: d.chart.result[0].meta.regularMarketPrice, currency: 'TWD' };
+      return true;
+    }
+  } catch(e) {}
+  
+  return false;
+}
+
+async function fetchUsPrice(ticker) {
+  try {
+    const d = await proxyFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1m&range=1d`);
+    stockPrices[ticker] = { price: d.chart.result[0].meta.regularMarketPrice, currency: 'USD' };
+    return true;
+  } catch(e) { return false; }
 }
 
 async function refreshAll() {
-  document.querySelector('.refresh-btn').classList.add('loading');
+  document.getElementById('refBtn').classList.add('loading');
   try {
     const fx = await proxyFetch('https://open.er-api.com/v6/latest/TWD');
-    fxRates.USD = 1/fx.rates.USD; fxRates.JPY = 1/fx.rates.JPY;
-    document.getElementById('fx-USD').textContent = fxRates.USD.toFixed(2);
-    document.getElementById('fx-JPY').textContent = fxRates.JPY.toFixed(4);
-    
+    fxUSD = 1/fx.rates.USD;
     for (let a of assets) {
-      if (a.tt === 'tw') await fetchTwseOne(a.ticker);
-      if (a.tt === 'us') await fetchYahoo(a.ticker, a.ticker, 'USD');
+      if (a.tt === 'tw' && a.ticker) await fetchTwPrice(a.ticker);
+      if (a.tt === 'us' && a.ticker) await fetchUsPrice(a.ticker);
     }
-  } catch (e) { console.error(e); }
+  } catch (e) {}
   render();
-  document.querySelector('.refresh-btn').classList.remove('loading');
+  document.getElementById('refBtn').classList.remove('loading');
 }
 
 function render() {
   const con = document.getElementById('groupsContainer');
   con.innerHTML = '';
-  let totalA = 0, totalD = 0;
+  let total = 0;
 
-  assets.forEach(a => {
+  assets.forEach((a, idx) => {
     let val = a.amount || 0;
+    let pTag = '';
     if (a.ticker && stockPrices[a.ticker]) {
-      val = stockPrices[a.ticker].price * (a.qty || 0);
-      if (stockPrices[a.ticker].currency === 'USD') val *= fxRates.USD;
+      const p = stockPrices[a.ticker];
+      val = p.price * (a.qty || 0);
+      if (p.currency === 'USD') val *= fxUSD;
+      pTag = `<span class="price-tag">${p.price.toFixed(1)}</span>`;
     }
-    if (a.category === 'debt') totalD += val; else totalA += val;
+    total += val;
     
-    let g = document.getElementById('cat-' + a.category);
-    if (!g) {
-      g = document.createElement('div'); g.id = 'cat-' + a.category; g.className = 'asset-group';
-      g.innerHTML = `<h4 style="color:var(--dim);margin-bottom:10px">${a.category.toUpperCase()}</h4><div class="grid"></div>`;
-      con.appendChild(g);
-    }
     const card = document.createElement('div');
     card.className = 'asset-card';
-    card.innerHTML = `<div>${a.name} <span class="price-tag">${a.ticker || ''}</span></div><div class="asset-right">NT$${Math.round(val).toLocaleString()}</div>`;
-    g.querySelector('.grid').appendChild(card);
+    card.innerHTML = `
+      <div><strong>${a.name}</strong> ${pTag}</div>
+      <div class="asset-right">
+        <div>NT$${Math.round(val).toLocaleString()}</div>
+        <button class="del-btn" onclick="delAsset(${idx})">刪除</button>
+      </div>
+    `;
+    con.appendChild(card);
   });
 
-  const nw = totalA - totalD;
-  document.getElementById('netWorthDisplay').textContent = 'NT$' + Math.round(nw).toLocaleString();
-  document.getElementById('totalAssetsDisplay').textContent = 'NT$' + Math.round(totalA).toLocaleString();
-  document.getElementById('totalDebtDisplay').textContent = 'NT$' + Math.round(totalD).toLocaleString();
-  
-  if (nw > 0) recordHistory(nw);
+  document.getElementById('netWorthDisplay').textContent = 'NT$' + Math.round(total).toLocaleString();
+  recordHistory(total);
 }
 
 function recordHistory(nw) {
   const date = new Date().toLocaleDateString();
+  if (nw <= 0) return;
   if (!historyData.length || historyData[historyData.length-1].date !== date) {
     historyData.push({ date, value: nw });
     if (historyData.length > 30) historyData.shift();
@@ -222,32 +193,33 @@ function renderChart() {
     type: 'line',
     data: {
       labels: historyData.map(d => d.date.split('/')[2] + '日'),
-      datasets: [{ data: historyData.map(d => d.value), borderColor: '#f5d87a', fill: true, backgroundColor: 'rgba(245,216,122,0.1)', tension: 0.4 }]
+      datasets: [{ data: historyData.map(d => d.value), borderColor: '#f5d87a', backgroundColor: 'rgba(245,216,122,0.1)', fill: true, tension: 0.3 }]
     },
     options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8fa8c0' } } } }
   });
 }
 
-function onCatChange() { document.getElementById('investSection').style.display = document.getElementById('inputCategory').value === 'invest' ? 'block' : 'none'; }
 function openModal() { document.getElementById('modalOverlay').classList.add('open'); }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 function saveAsset() {
   const a = {
-    id: Date.now(),
     name: document.getElementById('inputName').value,
-    category: document.getElementById('inputCategory').value,
     ticker: document.getElementById('inputTicker').value,
-    qty: parseFloat(document.getElementById('inputQty').value),
-    amount: parseFloat(document.getElementById('inputAmount').value),
-    tt: document.getElementById('inputTT').value
+    qty: parseFloat(document.getElementById('inputQty').value) || 0,
+    tt: document.getElementById('inputTT').value,
+    amount: parseFloat(document.getElementById('inputAmount').value) || 0
   };
   assets.push(a);
-  localStorage.setItem('wt_assets_v3', JSON.stringify(assets));
+  localStorage.setItem('wt_assets_v4', JSON.stringify(assets));
   closeModal(); refreshAll();
 }
-document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString();
-const addBtn = document.createElement('button'); addBtn.className = 'add-btn'; addBtn.textContent = '＋ 新增資產標的'; addBtn.onclick = openModal;
-document.querySelector('.app').appendChild(addBtn);
+function delAsset(idx) {
+  if(confirm('確定刪除？')) {
+    assets.splice(idx, 1);
+    localStorage.setItem('wt_assets_v4', JSON.stringify(assets));
+    render();
+  }
+}
 refreshAll();
 </script>
 </body>
