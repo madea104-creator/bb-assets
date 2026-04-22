@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>資產總覽 - 股數修復版</title>
+<title>資產總覽 - 全直覺編輯版</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root { --bg:#1a2030; --surface:#232d3f; --border:#3a4d65; --accent:#f5d87a; --text:#f0f4fa; --dim:#8fa8c0; }
@@ -11,11 +11,14 @@
   body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;padding:20px}
   .app{max-width:600px;margin:0 auto}
   header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;border-bottom:1px solid var(--border);padding-bottom:15px}
+  .logo{font-size:24px;font-weight:700;color:var(--accent)}
   .hero{background:linear-gradient(135deg,var(--surface) 0%,#1a2535 100%);border-radius:16px;padding:35px;margin-bottom:25px;border:1px solid var(--border);text-align:center}
-  .hero-amount{font-size:38px;color:var(--accent);margin-top:10px;font-family:'DM Mono',monospace;font-weight:700}
-  .asset-card{background:var(--surface);border-radius:12px;padding:15px 20px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .hero-amount{font-size:38px;color:var(--accent);margin-top:10px;font-family:'DM Mono',monospace}
+  .asset-card{background:var(--surface);border-radius:12px;padding:15px 20px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:transform 0.1s}
+  .asset-card:active{transform:scale(0.98)}
   .price-tag{font-family:'DM Mono',monospace;font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(94,207,176,.1);color:#5ecfb0;margin-top:5px;display:inline-block}
-  .btn-del{padding:5px 10px;background:transparent;border:1px solid rgba(240,122,96,0.4);color:#f07a60;border-radius:6px;font-size:12px;cursor:pointer}
+  .btn-del{padding:6px 12px;background:transparent;border:1px solid rgba(240,122,96,0.4);color:#f07a60;border-radius:6px;font-size:12px;cursor:pointer}
+  
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100;align-items:center;justify-content:center;padding:15px}
   .modal-overlay.open{display:flex}
   .modal{background:#fff;padding:25px;border-radius:16px;width:100%;max-width:450px;color:#000;max-height:90vh;overflow-y:auto}
@@ -27,49 +30,49 @@
 <body>
 <div class="app">
   <header>
-    <div style="font-size:24px;font-weight:700;color:var(--accent)">Wealth Tracker</div>
-    <button style="padding:5px 10px;background:transparent;border:1px solid var(--border);color:var(--dim);border-radius:6px" onclick="refreshAll()">↻ 更新報價</button>
+    <div class="logo">Wealth Tracker</div>
+    <button style="padding:6px 12px;background:transparent;border:1px solid var(--border);color:var(--dim);border-radius:6px;cursor:pointer" onclick="refreshAll()">↻ 點此更新報價</button>
   </header>
   <div class="hero">
     <div style="font-size:14px;color:var(--dim)">總資產淨值 (TWD)</div>
     <div class="hero-amount" id="totalValue">NT$ 0</div>
   </div>
   <div id="list"></div>
-  <button style="width:100%;padding:18px;background:var(--accent);color:#1a2030;border:none;border-radius:12px;font-weight:700;margin-top:20px;cursor:pointer" onclick="openModal()">＋ 新增項目 (存款/股票/CB)</button>
+  <button style="width:100%;padding:18px;background:var(--accent);color:#1a2030;border:none;border-radius:12px;font-weight:700;margin-top:20px;cursor:pointer" onclick="openModal()">＋ 新增資產項目</button>
 </div>
 
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3 id="mTitle" style="margin-bottom:20px">新增資產</h3>
+    <h3 id="mTitle" style="margin-bottom:20px">編輯資產</h3>
     <label>項目名稱</label>
-    <input id="name" placeholder="例: 台積電 / 國泰台幣">
+    <input id="name" placeholder="例: 台積電">
     
     <label>資產類別</label>
     <select id="type" onchange="toggle()">
-      <option value="cash">台幣存款 / 其他 (手動輸入總額)</option>
-      <option value="fxcash">外幣存款 (自動換算匯率)</option>
-      <option value="stock">股票 / 可轉債 CB (自動抓報價)</option>
+      <option value="cash">台幣存款 / 手動總額</option>
+      <option value="fxcash">外幣存款 (USD/JPY)</option>
+      <option value="invest">投資 (股票/CB/幣)</option>
     </select>
 
-    <div id="stockGroup">
+    <div id="investGroup">
       <label>代號</label>
       <input id="ticker" placeholder="例: 2330 / 37012 / NVDA">
-      <label>持有數量 (股數 / 張數)</label>
-      <input id="qty" type="number" placeholder="請輸入股數或張數">
+      <label>數量 (股數/張數)</label>
+      <input id="qty" type="number" placeholder="請輸入股數">
       <label>市場</label>
-      <select id="mkt"><option value="tw">台灣市場 (.TW)</option><option value="us">美國市場 (USD)</option></select>
+      <select id="mkt"><option value="tw">台灣 (.TW)</option><option value="us">美國 (USD)</option></select>
     </div>
 
     <div id="fxGroup" style="display:none">
-      <label>幣別</label>
-      <select id="ccy"><option value="USD">USD 美元</option><option value="JPY">JPY 日圓</option></select>
-      <label>外幣總金額</label>
+      <label>外幣金額</label>
       <input id="fxAmt" type="number" placeholder="例: 5000">
+      <label>幣別</label>
+      <select id="ccy"><option value="USD">USD</option><option value="JPY">JPY</option></select>
     </div>
 
     <div id="cashGroup" style="display:none">
-      <label>台幣金額 (NT$)</label>
-      <input id="amount" type="number" placeholder="請輸入 NT$ 總額">
+      <label>台幣總金額 (NT$)</label>
+      <input id="amount" type="number" placeholder="請輸入總額">
     </div>
 
     <button class="btn-save" onclick="save()">儲存資料</button>
@@ -78,19 +81,19 @@
 </div>
 
 <script>
-let assets = JSON.parse(localStorage.getItem('wt_final_fixed') || '[]');
+let assets = JSON.parse(localStorage.getItem('wt_final_v6') || '[]');
 const rates = { USD: 32.5, JPY: 0.211 };
 let editIdx = -1;
 
 function toggle() {
   const t = document.getElementById('type').value;
-  document.getElementById('stockGroup').style.display = t === 'stock' ? 'block' : 'none';
+  document.getElementById('investGroup').style.display = t === 'invest' ? 'block' : 'none';
   document.getElementById('fxGroup').style.display = t === 'fxcash' ? 'block' : 'none';
   document.getElementById('cashGroup').style.display = t === 'cash' ? 'block' : 'none';
 }
 
 async function fetchPrice(a) {
-  if (a.type !== 'stock') return;
+  if (a.type !== 'invest') return;
   const proxy = 'https://corsproxy.io/?';
   const sym = a.mkt === 'tw' ? a.ticker + '.TW' : a.ticker;
   try {
@@ -98,7 +101,7 @@ async function fetchPrice(a) {
     const d = await r.json();
     a.price = d.chart.result[0].meta.regularMarketPrice;
   } catch (e) {
-    if (!a.price) a.price = parseFloat(prompt(`[${a.name}] 抓取失敗，請手動填入單價:`)) || 0;
+    if (!a.price) a.price = parseFloat(prompt(`[${a.name}] 報價更新失敗，請手動填入當前單價:`)) || 0;
   }
 }
 
@@ -116,13 +119,13 @@ function render() {
     }
     total += val;
     list.innerHTML += `<div class="asset-card">
-      <div onclick="edit(${i})" style="flex:1; cursor:pointer">
-        <div style="font-weight:700">${a.name}</div>
-        <span class="price-tag">${a.type==='stock'?(a.price?'單價: '+a.price:'點擊更新'):'固定值'}</span>
+      <div onclick="edit(${i})" style="flex:1">
+        <div style="font-weight:700">${a.name} (點此修改)</div>
+        <span class="price-tag">${a.type==='invest'?(a.price?'單價: '+a.price:'更新中...'):'固定金額'}</span>
       </div>
       <div style="text-align:right">
         <div style="font-family:'DM Mono'">NT$ ${Math.round(val).toLocaleString()}</div>
-        <button class="btn-del" onclick="del(${i})">刪除</button>
+        <button class="btn-del" onclick="del(event, ${i})">刪除</button>
       </div>
     </div>`;
   });
@@ -144,23 +147,24 @@ async function save() {
     amount: parseFloat(document.getElementById('amount').value) || 0,
     price: (editIdx > -1) ? assets[editIdx].price : 0
   };
-  if (a.type === 'stock' && (!a.price || a.ticker !== (assets[editIdx]?assets[editIdx].ticker:''))) await fetchPrice(a);
+  if (a.type === 'invest' && (!a.price || a.ticker !== (assets[editIdx]?assets[editIdx].ticker:''))) await fetchPrice(a);
   if (editIdx > -1) assets[editIdx] = a; else assets.push(a);
-  localStorage.setItem('wt_final_fixed', JSON.stringify(assets));
+  localStorage.setItem('wt_final_v6', JSON.stringify(assets));
   closeModal(); render();
 }
 
 function edit(i) {
   editIdx = i; const a = assets[i];
-  document.getElementById('mTitle').textContent='修改資產';
+  document.getElementById('mTitle').textContent='修改資產 (打錯字請在此修正)';
   document.getElementById('name').value=a.name; document.getElementById('type').value=a.type;
   document.getElementById('ticker').value=a.ticker; document.getElementById('qty').value=a.qty;
-  document.getElementById('fxAmt').value=a.fxAmt; document.getElementById('fxCcy').value=a.ccy;
-  document.getElementById('amount').value=a.amount; document.getElementById('modal').classList.add('open'); toggle();
+  document.getElementById('fxAmt').value=a.fxAmt; document.getElementById('ccy').value=a.ccy;
+  document.getElementById('amount').value=a.amount;
+  document.getElementById('modal').classList.add('open'); toggle();
 }
 
-function del(i) { if(confirm('確定刪除？')) { assets.splice(i,1); localStorage.setItem('wt_final_fixed', JSON.stringify(assets)); render(); } }
-async function refreshAll() { for (let a of assets) await fetchPrice(a); render(); }
+function del(e, i) { e.stopPropagation(); if(confirm('確定刪除此項目？')) { assets.splice(i,1); localStorage.setItem('wt_final_v6', JSON.stringify(assets)); render(); } }
+async function refreshAll() { alert('開始更新最新報價...'); for (let a of assets) await fetchPrice(a); render(); }
 render();
 </script>
 </body>
