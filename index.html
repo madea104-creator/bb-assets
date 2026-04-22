@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資產總覽</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#1a2030; --surface:#232d3f; --surface2:#2a3650; --border:#3a4d65;
+    --accent:#f5d87a; --accent2:#5ecfb0; --text:#f0f4fa;
+    --muted:#8fa8c0; --dim:#b8cfe0;
+    --pos:#5ecfb0; --neg:#f07a60; --shadow:0 8px 32px rgba(0,0,0,.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:400;font-size:16px;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(30,45,61,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(30,45,61,.3) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+  .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 24px}
+
+  /* ── Header ── */
+  header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+  .logo{font-family:'Playfair Display',serif;font-size:32px;color:var(--accent)}
+  .logo span{color:var(--muted);font-size:13px;font-family:'DM Mono',monospace;display:block;margin-top:2px;letter-spacing:.1em}
+  .header-right{text-align:right}
+  .date-display{font-family:'DM Mono',monospace;font-size:14px;color:var(--dim);letter-spacing:.08em}
+  .refresh-row{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:6px}
+  .refresh-btn{padding:5px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;letter-spacing:.06em}
+  .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .refresh-btn.loading .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .last-updated{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+
+  /* ── Status bar ── */
+  .status-bar{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+  .status-pill{padding:5px 14px;border-radius:20px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.06em;display:flex;align-items:center;gap:6px;color:var(--dim)}
+  .sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+  .sdot.ok{background:var(--pos);box-shadow:0 0 6px var(--pos)}
+  .sdot.err{background:var(--neg)}
+  .sdot.loading{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ── Hero ── */
+  .hero{background:linear-gradient(135deg,var(--surface) 0%,#1a2535 100%);border:1px solid var(--border);border-radius:16px;padding:44px 52px;margin-bottom:32px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  .hero::after{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:radial-gradient(circle,rgba(232,201,122,.06) 0%,transparent 70%);pointer-events:none}
+  .hero-label{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:12px}
+  .hero-amount{font-family:'Playfair Display',serif;font-size:64px;font-weight:700;color:var(--accent);letter-spacing:-.02em;line-height:1}
+  .hero-sub{display:flex;gap:32px;margin-top:20px;flex-wrap:wrap}
+  .hero-stat .label{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
+  .hero-stat .value{font-family:'DM Mono',monospace;font-size:18px;color:var(--text)}
+  .hero-stat .value.neg{color:var(--neg)}
+  .rate-badge{position:absolute;top:16px;right:16px;background:rgba(245,216,122,.1);border:1px solid rgba(245,216,122,.25);border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.06em;line-height:1.8}
+
+  /* ── FX rates panel ── */
+  .fx-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 28px;margin-bottom:32px;box-shadow:var(--shadow)}
+  .fx-panel-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+  .fx-grid{display:flex;flex-wrap:wrap;gap:10px}
+  .fx-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:flex;flex-direction:column;gap:2px;min-width:100px}
+  .fx-chip .ccy{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--dim)}
+  .fx-chip .rate{font-family:'DM Mono',monospace;font-size:16px;color:var(--text)}
+  .fx-chip .chg{font-family:'DM Mono',monospace;font-size:10px}
+  .fx-chip .chg.up{color:var(--pos)} .fx-chip .chg.down{color:var(--neg)}
+
+  /* ── Allocation ── */
+  .alloc-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:32px;box-shadow:var(--shadow)}
+  .section-title{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin-bottom:20px}
+  .bar-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;display:flex;margin-bottom:16px}
+  .bar-seg{height:100%;transition:width .6s ease}
+  .legend{display:flex;flex-wrap:wrap;gap:14px 24px}
+  .legend-item{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:14px;color:var(--text)}
+  .legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+  /* ── Tabs ── */
+  .tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+  .tab{padding:10px 20px;border-radius:40px;font-family:'DM Mono',monospace;font-size:14px;letter-spacing:.06em;cursor:pointer;border:1px solid var(--border);color:var(--dim);background:transparent;transition:all .2s}
+  .tab:hover{border-color:var(--accent);color:var(--accent)}
+  .tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:500}
+
+  /* ── Groups ── */
+  .asset-group{margin-bottom:28px;display:none}
+  .asset-group.visible{display:block}
+  .group-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .group-title{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+  .group-title::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%}
+  .group-title.cash::before{background:var(--accent)}
+  .group-title.fxcash::before{background:#60a5fa}
+  .group-title.overseas::before{background:#34d399}
+  .group-title.invest::before{background:var(--accent2)}
+  .group-title.property::before{background:#a78bfa}
+  .group-title.debt::before{background:var(--neg)}
+  .group-total{font-family:'DM Mono',monospace;font-size:16px;color:var(--text)}
+
+  /* ── Cards ── */
+  .assets-grid{display:flex;flex-direction:column;gap:8px}
+  .asset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;transition:border-color .2s,background .2s;position:relative}
+  .asset-card:hover{border-color:#2a3d50;background:var(--surface2)}
+  .asset-card .left{display:flex;align-items:center;gap:14px}
+  .asset-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .asset-name{font-size:17px;font-weight:500;color:var(--text);margin-bottom:4px}
+  .asset-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .asset-note{font-family:'DM Mono',monospace;font-size:13px;color:var(--dim)}
+  .price-tag{font-family:'DM Mono',monospace;font-size:12px;padding:3px 9px;border-radius:4px;background:rgba(94,207,176,.12);border:1px solid rgba(94,207,176,.25);color:var(--accent2);white-space:nowrap}
+  .price-tag.fx{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.25);color:#93c5fd}
+  .price-tag.loading{color:var(--muted);border-color:var(--border);background:transparent;animation:pulse 1s ease-in-out infinite}
+  .price-tag.err{color:var(--neg);border-color:rgba(224,122,95,.3);background:rgba(224,122,95,.08)}
+  .asset-right{text-align:right;min-width:140px;position:relative}
+  .asset-amount{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--text);transition:opacity .2s}
+  .asset-amount.debt{color:var(--neg)}
+  .asset-amount-orig{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px}
+  .asset-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s;position:absolute;right:0;top:50%;transform:translateY(-50%)}
+  .asset-card:hover .asset-actions{opacity:1}
+  .asset-card:hover .asset-amount{opacity:0}
+  .asset-card:hover .asset-amount-orig{opacity:0}
+  .btn-icon{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s}
+  .btn-icon:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-icon.delete:hover{border-color:var(--neg);color:var(--neg)}
+  .add-btn{width:100%;padding:14px;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--dim);font-family:'Noto Sans TC',sans-serif;font-size:15px;cursor:pointer;margin-top:8px;transition:all .2s}
+  .add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.03)}
+
+  /* ── Modal ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;width:100%;max-width:520px;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:slideUp .25s ease;max-height:90vh;overflow-y:auto}
+  @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .modal-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--accent);margin-bottom:24px}
+  .form-group{margin-bottom:16px}
+  .form-label{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:6px;display:block}
+  .form-input,.form-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:'DM Mono',monospace;font-size:16px;outline:none;transition:border-color .2s}
+  .form-input:focus,.form-select:focus{border-color:var(--accent)}
+  .form-select option{background:var(--surface)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .form-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:5px}
+  .divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+  .type-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .type-btn{flex:1;min-width:76px;padding:8px 6px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;text-align:center}
+  .type-btn.active{background:rgba(93,184,160,.1);border-color:var(--accent2);color:var(--accent2)}
+  .type-btn.active-fx{background:rgba(96,165,250,.1);border-color:#60a5fa;color:#93c5fd}
+  .modal-actions{display:flex;gap:10px;margin-top:24px;justify-content:flex-end}
+  .btn{padding:10px 22px;border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;border:1px solid var(--border);transition:all .15s;letter-spacing:.06em}
+  .btn-ghost{background:transparent;color:var(--muted)}
+  .btn-ghost:hover{color:var(--text)}
+  .btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:500}
+  .btn-primary:hover{background:#f0d48a}
+
+  /* sub-category label */
+  .subcat-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:4px;text-transform:uppercase}
+  .subcat-badge.fxcash{background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.25);color:#93c5fd}
+  .subcat-badge.overseas{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.25);color:#6ee7b7}
+
+  @media(max-width:640px){
+    .hero{padding:28px 20px}.hero-amount{font-size:36px}
+    header{flex-direction:column;align-items:flex-start;gap:10px}
+    .form-row,.form-row3{grid-template-columns:1fr}
+    .rate-badge{position:static;display:inline-block;margin-top:12px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- First-time setup banner -->
+  <div id="setupBanner" style="display:none;background:rgba(245,216,122,.1);border:1px solid rgba(245,216,122,.35);border-radius:12px;padding:18px 20px;margin-bottom:24px">
+    <div style="font-family:'DM Mono',monospace;font-size:13px;color:#f5d87a;font-weight:500;margin-bottom:8px">📌 加入主畫面</div>
+    <div style="font-size:14px;color:#b8cfe0;line-height:1.7">
+      點底部 <strong style="color:#f0f4fa">分享 📤</strong> → 往下滑找 <strong style="color:#f0f4fa">加入主畫面</strong><br>
+      這樣下次直接從桌面開啟，不需要找檔案。
+    </div>
+    <button onclick="document.getElementById('setupBanner').style.display='none';localStorage.setItem('bannerDismissed','1')" 
+      style="margin-top:12px;padding:8px 18px;background:rgba(245,216,122,.2);border:1px solid rgba(245,216,122,.4);border-radius:8px;color:#f5d87a;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer">
+      知道了 ✕
+    </button>
+  </div>
+
+  <header>
+    <div class="logo">資產追蹤<span>WEALTH TRACKER</span></div>
+    <div class="header-right">
+      <div class="date-display" id="dateDisplay"></div>
+      <div class="refresh-row">
+        <span class="last-updated" id="lastUpdated">尚未更新</span>
+        <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
+          <span class="spin">↻</span> 更新報價
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-pill"><div class="sdot" id="dot-twse"></div><span>台股 TWSE</span></div>
+    <div class="status-pill"><div class="sdot" id="dot-us"></div><span>美股 Yahoo</span></div>
+    <div class="status-pill"><div class="sdot" id="dot-crypto"></div><span>加密貨幣</span></div>
+    <div class="status-pill"><div class="sdot" id="dot-fx"></div><span id="fxStatusLabel">外幣匯率</span></div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-label">總淨資產 NET WORTH</div>
+    <div class="hero-amount" id="netWorthDisplay">—</div>
+    <div class="hero-sub">
+      <div class="hero-stat"><div class="label">總資產</div><div class="value" id="totalAssetsDisplay">—</div></div>
+      <div class="hero-stat"><div class="label">總負債</div><div class="value neg" id="totalDebtDisplay">—</div></div>
+      <div class="hero-stat"><div class="label">負債比率</div><div class="value" id="debtRatioDisplay">—</div></div>
+    </div>
+    <div class="rate-badge" id="rateBadge">載入匯率中…</div>
+  </div>
+
+  <!-- FX rates panel -->
+  <div class="fx-panel">
+    <div class="fx-panel-title">即時匯率 LIVE FX RATES (對台幣)</div>
+    <div class="fx-grid" id="fxGrid">
+      <div class="fx-chip"><div class="ccy">USD</div><div class="rate" id="fx-USD">—</div></div>
+      <div class="fx-chip"><div class="ccy">EUR</div><div class="rate" id="fx-EUR">—</div></div>
+      <div class="fx-chip"><div class="ccy">JPY</div><div class="rate" id="fx-JPY">—</div></div>
+      <div class="fx-chip"><div class="ccy">GBP</div><div class="rate" id="fx-GBP">—</div></div>
+      <div class="fx-chip"><div class="ccy">AUD</div><div class="rate" id="fx-AUD">—</div></div>
+      <div class="fx-chip"><div class="ccy">CNY</div><div class="rate" id="fx-CNY">—</div></div>
+      <div class="fx-chip"><div class="ccy">HKD</div><div class="rate" id="fx-HKD">—</div></div>
+      <div class="fx-chip"><div class="ccy">SGD</div><div class="rate" id="fx-SGD">—</div></div>
+    </div>
+  </div>
+
+  <!-- Allocation -->
+  <div class="alloc-section">
+    <div class="section-title">資產配置 ALLOCATION</div>
+    <div class="bar-track" id="allocationBar"></div>
+    <div class="legend" id="allocationLegend"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="filterGroup('all')">全部</button>
+    <button class="tab" onclick="filterGroup('cash')">台幣存款</button>
+    <button class="tab" onclick="filterGroup('fxcash')">台灣外幣</button>
+    <button class="tab" onclick="filterGroup('overseas')">海外存款</button>
+    <button class="tab" onclick="filterGroup('invest')">投資</button>
+    <button class="tab" onclick="filterGroup('property')">不動產</button>
+    <button class="tab" onclick="filterGroup('debt')">負債</button>
+  </div>
+
+  <div id="groupsContainer"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">新增資產</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">名稱</label>
+        <input class="form-input" id="inputName" placeholder="例：花旗美元存款">
+      </div>
+      <div class="form-group">
+        <label class="form-label">圖示</label>
+        <input class="form-input" id="inputIcon" placeholder="💵" maxlength="2">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">類別</label>
+        <select class="form-select" id="inputCategory" onchange="onCatChange()">
+          <option value="cash">台幣存款</option>
+          <option value="fxcash">台灣外幣存款</option>
+          <option value="overseas">海外存款（外幣）</option>
+          <option value="invest">投資</option>
+          <option value="property">不動產</option>
+          <option value="debt">負債</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">備註 (選填)</label>
+        <input class="form-input" id="inputNote" placeholder="">
+      </div>
+    </div>
+
+    <hr class="divider" id="fxDivider" style="display:none">
+
+    <!-- Foreign currency section (fxcash / overseas) -->
+    <div id="fxSection" style="display:none">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">幣別</label>
+          <select class="form-select" id="inputCurrency">
+            <option value="USD">USD 美元</option>
+            <option value="EUR">EUR 歐元</option>
+            <option value="JPY">JPY 日圓</option>
+            <option value="GBP">GBP 英鎊</option>
+            <option value="AUD">AUD 澳幣</option>
+            <option value="CNY">CNY 人民幣</option>
+            <option value="HKD">HKD 港幣</option>
+            <option value="SGD">SGD 新加坡幣</option>
+            <option value="CHF">CHF 瑞士法郎</option>
+            <option value="CAD">CAD 加拿大幣</option>
+            <option value="NZD">NZD 紐幣</option>
+            <option value="OTHER">其他幣別</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">存款金額（外幣）</label>
+          <input class="form-input" id="inputFxAmount" type="number" placeholder="10000" min="0" step="any">
+          <div class="form-hint">輸入原始外幣金額，自動換算台幣</div>
+        </div>
+      </div>
+      <div id="customRateRow" style="display:none" class="form-group">
+        <label class="form-label">手動匯率（1外幣 = ? 台幣）</label>
+        <input class="form-input" id="inputCustomRate" type="number" placeholder="32.5" step="any" min="0">
+        <div class="form-hint">選「其他幣別」時需手動輸入匯率</div>
+      </div>
+    </div>
+
+    <hr class="divider" id="investDivider" style="display:none">
+
+    <!-- Invest section -->
+    <div id="investSection" style="display:none">
+      <div class="form-label" style="margin-bottom:8px">報價來源</div>
+      <div class="type-row">
+        <button class="type-btn active" id="typeManual" onclick="setTT('manual')">手動金額</button>
+        <button class="type-btn" id="typeTw"     onclick="setTT('tw')">🇹🇼 台股</button>
+        <button class="type-btn" id="typeCb"     onclick="setTT('cb')">📄 可轉債</button>
+        <button class="type-btn" id="typeUs"     onclick="setTT('us')">🇺🇸 美股</button>
+        <button class="type-btn" id="typeCrypto" onclick="setTT('crypto')">₿ 加密幣</button>
+      </div>
+      <div id="tickerSection" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" id="tickerLabel">代號</label>
+            <input class="form-input" id="inputTicker" placeholder="2330">
+            <div class="form-hint" id="tickerHint"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">持有數量</label>
+            <input class="form-input" id="inputQty" type="number" placeholder="0" step="any" min="0">
+            <div class="form-hint" id="qtyHint">股數</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="amountGroup">
+      <label class="form-label" id="amountLabel">金額 (NT$)</label>
+      <input class="form-input" id="inputAmount" type="number" placeholder="0" min="0" step="any">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveAsset()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Category config ──────────────────────────────────────────────────────────
+const CAT = {
+  cash:     { label:'台幣存款',       color:'#e8c97a', icon:'🏦' },
+  fxcash:   { label:'台灣外幣存款',   color:'#60a5fa', icon:'💵' },
+  overseas: { label:'海外存款',       color:'#34d399', icon:'🌏' },
+  invest:   { label:'投資',           color:'#5db8a0', icon:'📈' },
+  property: { label:'不動產',         color:'#a78bfa', icon:'🏠' },
+  debt:     { label:'負債',           color:'#e07a5f', icon:'💳' },
+};
+
+// Currencies we track (Yahoo Finance symbol -> display)
+const FX_PAIRS = {
+  USD: 'USDTWD=X', EUR: 'EURTWD=X', JPY: 'JPYTWD=X',
+  GBP: 'GBPTWD=X', AUD: 'AUDTWD=X', CNY: 'CNYTWD=X',
+  HKD: 'HKDTWD=X', SGD: 'SGDTWD=X', CHF: 'CHFTWD=X',
+  CAD: 'CADTWD=X', NZD: 'NZDTWD=X',
+};
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let assets = JSON.parse(localStorage.getItem('wt_assets_v3') || '[]');
+let fxRates = JSON.parse(localStorage.getItem('wt_fx') || '{}'); // ccy -> rate (to TWD)
+let stockPrices = {}; // ticker -> { price, change, currency }
+let editingId = null, currentFilter = 'all', currentTT = 'manual';
+
+if (!assets.length) {
+  assets = [
+    { id:1,  name:'台灣銀行活儲',     amount:350000,  category:'cash',     note:'日常帳戶',   icon:'🏦' },
+    { id:2,  name:'台幣定存',          amount:500000,  category:'cash',     note:'1年定存',    icon:'💰' },
+    { id:3,  name:'國泰美元存款',      amount:0,       category:'fxcash',   note:'利率 3.5%',  icon:'💵', fxCcy:'USD', fxAmt:5000 },
+    { id:4,  name:'日圓活儲',          amount:0,       category:'fxcash',   note:'兆豐銀行',   icon:'🇯🇵', fxCcy:'JPY', fxAmt:500000 },
+    { id:5,  name:'Wise USD',          amount:0,       category:'overseas', note:'美國帳戶',   icon:'🌐', fxCcy:'USD', fxAmt:8000 },
+    { id:6,  name:'新加坡DBS SGD',     amount:0,       category:'overseas', note:'海外存款',   icon:'🇸🇬', fxCcy:'SGD', fxAmt:3000 },
+    { id:7,  name:'台積電',            amount:0,       category:'invest',   note:'',           icon:'📊', ticker:'2330', tt:'tw', qty:1000 },
+    { id:8,  name:'元大台灣50',        amount:0,       category:'invest',   note:'',           icon:'📈', ticker:'0050', tt:'tw', qty:500 },
+    { id:9,  name:'NVDA',              amount:0,       category:'invest',   note:'',           icon:'🇺🇸', ticker:'NVDA', tt:'us', qty:10 },
+    { id:10, name:'Bitcoin',           amount:0,       category:'invest',   note:'',           icon:'₿',  ticker:'bitcoin', tt:'crypto', qty:0.1 },
+    { id:11, name:'台北自住房',        amount:8500000, category:'property', note:'大安區',     icon:'🏠' },
+    { id:12, name:'房屋貸款',          amount:4200000, category:'debt',     note:'剩餘20年',   icon:'🏦' },
+    { id:13, name:'信用卡帳款',        amount:25000,   category:'debt',     note:'本月',       icon:'💳' },
+  ];
+  save();
+}
+
+function save() { localStorage.setItem('wt_assets_v3', JSON.stringify(assets)); }
+
+// ─── Value helpers ────────────────────────────────────────────────────────────
+function fxRate(ccy) {
+  return fxRates[ccy] || 0;
+}
+
+function assetTWD(a) {
+  // Foreign currency deposit
+  if ((a.category === 'fxcash' || a.category === 'overseas') && a.fxCcy && a.fxAmt) {
+    if (a.fxCcy === 'OTHER') return a.amount || 0;
+    const rate = fxRate(a.fxCcy);
+    return rate ? a.fxAmt * rate : (a.amount || 0);
+  }
+  // CB/CBAS: price is quoted per 100 face value, 1張 = 面額100,000
+  // Market value = (price / 100) * qty * 100,000
+  if (a.ticker && a.tt === 'cb' && a.qty) {
+    const p = stockPrices[a.ticker];
+    if (!p) return a.amount || 0;
+    return (p.price / 100) * a.qty * 100000;
+  }
+  // Stock / crypto
+  if (a.ticker && a.qty) {
+    const p = stockPrices[a.ticker];
+    if (!p) return a.amount || 0;
+    let v = p.price * a.qty;
+    if (p.currency === 'USD') v *= (fxRate('USD') || 32);
+    return v;
+  }
+  return a.amount || 0;
+}
+
+function fmt(n) {
+  n = Math.round(n);
+  if (Math.abs(n) >= 1e8) return 'NT$' + (n/1e8).toFixed(2) + '億';
+  if (Math.abs(n) >= 1e4) return 'NT$' + (n/1e4).toFixed(1) + '萬';
+  return 'NT$' + n.toLocaleString();
+}
+
+function fmtFx(n, ccy) {
+  if (ccy === 'JPY' || ccy === 'CNY') return Number(n).toLocaleString('en', {maximumFractionDigits:0}) + ' ' + ccy;
+  return Number(n).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + ccy;
+}
+
+// ─── CORS Proxy helper ────────────────────────────────────────────────────────
+// Cloudflare Worker proxy for TWSE/TPEx (bypasses CORS)
+const CF_WORKER = 'https://wild-hill-ee8c.madea104.workers.dev';
+
+async function proxyFetch(url) {
+  const r = await fetch(`${CF_WORKER}?url=${encodeURIComponent(url)}`);
+  if (!r.ok) throw new Error('proxy failed');
+  return await r.json();
+}
+
+async function proxyFetchText(url) {
+  const r = await fetch(`${CF_WORKER}?url=${encodeURIComponent(url)}`);
+  if (!r.ok) throw new Error('proxy failed');
+  return await r.text();
+}
+
+// ─── API: FX rates via exchangerate-api (CORS friendly, free) ────────────────
+async function fetchAllFx() {
+  setDot('fx','loading');
+  let ok = 0;
+  try {
+    // Use exchangerate-api free tier (no key needed, CORS friendly)
+    // Try direct, then via proxy
+    let fxResp;
+    try { fxResp = await fetch('https://open.er-api.com/v6/latest/TWD'); }
+    catch { fxResp = await fetch(`${CF_WORKER}?url=${encodeURIComponent('https://open.er-api.com/v6/latest/TWD')}`); }
+    const r = fxResp;
+    const d = await r.json();
+    if (d.result !== 'success') throw 0;
+    // d.rates gives X per 1 TWD, we want TWD per 1 foreign currency
+    const ccys = Object.keys(FX_PAIRS);
+    for (const ccy of ccys) {
+      if (d.rates[ccy]) {
+        fxRates[ccy] = 1 / d.rates[ccy];
+        const rate = fxRates[ccy];
+        const el = document.getElementById('fx-'+ccy);
+        if (el) {
+          el.textContent = ccy==='JPY' ? rate.toFixed(3) : rate.toFixed(4);
+          let chgEl = el.nextElementSibling;
+          if (!chgEl||!chgEl.classList.contains('chg')) {
+            chgEl = document.createElement('div');
+            chgEl.className = 'chg';
+            el.parentNode.appendChild(chgEl);
+          }
+          chgEl.textContent = '';
+          chgEl.className = 'chg';
+        }
+        ok++;
+      }
+    }
+    localStorage.setItem('wt_fx', JSON.stringify(fxRates));
+    const usd = fxRates['USD'], eur = fxRates['EUR'], jpy = fxRates['JPY'];
+    document.getElementById('rateBadge').innerHTML =
+      (usd?`USD ${usd.toFixed(2)}<br>`:'') +
+      (eur?`EUR ${eur.toFixed(2)}<br>`:'') +
+      (jpy?`JPY ${jpy.toFixed(3)}`:'');
+  } catch {}
+  setDot('fx', ok > 0 ? 'ok' : 'err');
+}
+
+// ─── API: Taiwan stocks via TWSE proxy ───────────────────────────────────────
+async function fetchTwseOne(ticker) {
+  try {
+    const url = `https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_AVG?response=json&stockNo=${ticker}`;
+    let d;
+    try {
+      // Try direct first (works in some environments)
+      const r = await fetch(url);
+      d = await r.json();
+    } catch {
+      // Fallback to proxy
+      d = await proxyFetch(url);
+    }
+    if (!d||!d.length) throw 0;
+    const price = parseFloat(d[d.length-1].ClosingPrice);
+    if (isNaN(price)) throw 0;
+    stockPrices[ticker] = { price, change:null, currency:'TWD' };
+    return true;
+  } catch { return fetchYahoo(ticker+'.TW', ticker, 'TWD'); }
+}
+
+
+// ─── API: Convertible Bonds (CB) via TWSE ────────────────────────────────────
+async function fetchCbOne(ticker) {
+  // Try direct fetch first (works from file://)
+  // Then fall back to Cloudflare Worker proxy (works from Netlify)
+  for (const ex of ['otc', 'tse']) {
+    const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${ex}_${ticker}.tw&json=1&delay=0`;
+    // Try 1: direct
+    // Try 2: via CF Worker proxy
+    for (const fetcher of [
+      () => fetch(url).then(r => r.json()),
+      () => fetch(`${CF_WORKER}?url=${encodeURIComponent(url)}`).then(r => r.json()),
+    ]) {
+      try {
+        const d = await fetcher();
+        if (!d.msgArray || !d.msgArray.length) continue;
+        const info = d.msgArray[0];
+        const rawPrice = (info.z && info.z !== '-') ? info.z :
+                         (info.b && info.b !== '-') ? info.b.split('_')[0] : null;
+        if (!rawPrice) continue;
+        const price = parseFloat(rawPrice);
+        if (isNaN(price) || price <= 0) continue;
+        const prev = parseFloat(info.y);
+        const change = (!isNaN(prev) && prev > 0) ? ((price - prev) / prev * 100) : null;
+        stockPrices[ticker] = { price, change, currency: 'TWD', name: info.n || '' };
+        return true;
+      } catch { continue; }
+    }
+  }
+
+  // Fallback: TPEx daily close via CF Worker
+  try {
+    const now = new Date();
+    const rocYear = now.getFullYear() - 1911;
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    const url = `https://www.tpex.org.tw/web/bond/search/daily_trading/data.php?l=zh-tw&d=${rocYear}%2F${mm}%2F${dd}&cb_no=${ticker}`;
+    const text = await fetch(`${CF_WORKER}?url=${encodeURIComponent(url)}`).then(r => r.text());
+    const m = text.match(/"aaData"\s*:\s*\[\s*\[([^\]]+)\]/);
+    if (m) {
+      const vals = m[1].split(',').map(v => v.trim().replace(/"/g,''));
+      const price = parseFloat(vals[4]);
+      if (!isNaN(price) && price > 0) {
+        stockPrices[ticker] = { price, change: null, currency: 'TWD' };
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
+// ─── API: Yahoo Finance via proxy ─────────────────────────────────────────────
+async function fetchYahoo(symbol, cacheKey, currency) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+    let meta;
+    try {
+      const r = await fetch(url);
+      const d = await r.json();
+      meta = d.chart.result[0].meta;
+    } catch {
+      const d = await proxyFetch(url);
+      meta = d.chart.result[0].meta;
+    }
+    const price = meta.regularMarketPrice;
+    const prev  = meta.chartPreviousClose;
+    stockPrices[cacheKey||symbol] = { price, change: prev?((price-prev)/prev*100):null, currency: currency||meta.currency||'USD' };
+    return true;
+  } catch { return false; }
+}
+
+// ─── API: CoinGecko ───────────────────────────────────────────────────────────
+async function fetchCrypto(ids) {
+  try {
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=twd&include_24hr_change=true`);
+    const d = await r.json();
+    for (const id of ids) {
+      if (d[id]) stockPrices[id] = { price:d[id].twd, change:d[id].twd_24h_change, currency:'TWD' };
+    }
+    setDot('crypto','ok'); return true;
+  } catch { setDot('crypto','err'); return false; }
+}
+
+// ─── Master refresh ───────────────────────────────────────────────────────────
+async function refreshAll() {
+  document.getElementById('refreshBtn').classList.add('loading');
+
+  const twList     = [...new Set(assets.filter(a=>a.tt==='tw').map(a=>a.ticker))];
+  const cbList     = [...new Set(assets.filter(a=>a.tt==='cb').map(a=>a.ticker))];
+  const usList     = [...new Set(assets.filter(a=>a.tt==='us').map(a=>a.ticker))];
+  const cryptoList = [...new Set(assets.filter(a=>a.tt==='crypto').map(a=>a.ticker))];
+
+  setDot('twse',   (twList.length||cbList.length) ? 'loading':'ok');
+  setDot('us',     usList.length     ? 'loading':'ok');
+  setDot('crypto', cryptoList.length ? 'loading':'ok');
+
+  const jobs = [fetchAllFx()];
+  if (twList.length) jobs.push(
+    Promise.all(twList.map(fetchTwseOne)).then(()=>setDot('twse','ok')).catch(()=>setDot('twse','err'))
+  );
+  if (cbList.length) jobs.push(
+    Promise.all(cbList.map(fetchCbOne)).then(()=>setDot('twse','ok')).catch(()=>setDot('twse','err'))
+  );
+  if (usList.length) jobs.push(
+    Promise.all(usList.map(t=>fetchYahoo(t,t,'USD'))).then(()=>setDot('us','ok')).catch(()=>setDot('us','err'))
+  );
+  if (cryptoList.length) jobs.push(fetchCrypto(cryptoList));
+
+  await Promise.allSettled(jobs);
+
+  // Persist computed TWD values
+  assets.forEach(a => { a.amount = assetTWD(a); });
+  save();
+
+  const now = new Date();
+  document.getElementById('lastUpdated').textContent =
+    `更新於 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('refreshBtn').classList.remove('loading');
+  render();
+}
+
+function setDot(id, state) {
+  const el = document.getElementById('dot-'+id);
+  if (el) el.className = 'sdot ' + state;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function calcTotals() {
+  const by = {cash:0,fxcash:0,overseas:0,invest:0,property:0,debt:0};
+  assets.forEach(a => by[a.category] = (by[a.category]||0) + assetTWD(a));
+  const ta = by.cash + by.fxcash + by.overseas + by.invest + by.property;
+  const td = by.debt;
+  return { by, ta, td, nw: ta-td };
+}
+
+function render() {
+  const {by, ta, td, nw} = calcTotals();
+  document.getElementById('netWorthDisplay').textContent    = fmt(nw);
+  document.getElementById('totalAssetsDisplay').textContent = fmt(ta);
+  document.getElementById('totalDebtDisplay').textContent   = fmt(td);
+  document.getElementById('debtRatioDisplay').textContent   = ta ? (td/ta*100).toFixed(1)+'%' : '0%';
+
+  // Allocation bar
+  const bar = document.getElementById('allocationBar');
+  const leg = document.getElementById('allocationLegend');
+  bar.innerHTML = leg.innerHTML = '';
+  const total = Object.values(by).reduce((s,v)=>s+v,0);
+  Object.entries(CAT).forEach(([k,c]) => {
+    const pct = total ? (by[k]||0)/total*100 : 0;
+    if (pct <= 0) return;
+    const s = document.createElement('div');
+    s.className = 'bar-seg'; s.style.cssText = `width:${pct}%;background:${c.color}`;
+    bar.appendChild(s);
+    const li = document.createElement('div');
+    li.className = 'legend-item';
+    li.innerHTML = `<div class="legend-dot" style="background:${c.color}"></div>${c.label} ${pct.toFixed(1)}%`;
+    leg.appendChild(li);
+  });
+
+  // Groups
+  const con = document.getElementById('groupsContainer');
+  con.innerHTML = '';
+  Object.keys(CAT).forEach(cat => {
+    if (currentFilter !== 'all' && currentFilter !== cat) return;
+    const list = assets.filter(a => a.category === cat);
+    const gtotal = list.reduce((s,a) => s + assetTWD(a), 0);
+    const cfg = CAT[cat];
+
+    const grp = document.createElement('div');
+    grp.className = 'asset-group visible';
+    grp.innerHTML = `
+      <div class="group-header">
+        <div class="group-title ${cat}">${cfg.label}</div>
+        <div class="group-total">${fmt(gtotal)}</div>
+      </div>
+      <div class="assets-grid" id="g-${cat}"></div>
+      <button class="add-btn" onclick="openModal(null,'${cat}')">＋ 新增${cfg.label}</button>
+    `;
+    con.appendChild(grp);
+
+    const grid = grp.querySelector(`#g-${cat}`);
+    list.forEach(a => {
+      const twdVal = assetTWD(a);
+      const ibg =
+        cat==='cash'     ? 'rgba(232,201,122,.12)' :
+        cat==='fxcash'   ? 'rgba(96,165,250,.12)'  :
+        cat==='overseas' ? 'rgba(52,211,153,.12)'  :
+        cat==='invest'   ? 'rgba(93,184,160,.12)'  :
+        cat==='property' ? 'rgba(167,139,250,.12)' :
+                           'rgba(224,122,95,.12)';
+
+      // Price / rate tag
+      let ptag = '';
+      let origLine = '';
+
+      if (cat === 'fxcash' || cat === 'overseas') {
+        const ccy = a.fxCcy;
+        const rate = fxRate(ccy);
+        if (ccy && ccy !== 'OTHER') {
+          if (!rate) {
+            ptag = `<span class="price-tag fx loading">載入匯率…</span>`;
+          } else {
+            ptag = `<span class="price-tag fx">${ccy}/TWD ${ccy==='JPY'?rate.toFixed(3):rate.toFixed(4)}</span>`;
+          }
+          if (a.fxAmt) origLine = fmtFx(a.fxAmt, ccy);
+        }
+      } else if (a.ticker) {
+        const p = stockPrices[a.ticker];
+        if (!p) {
+          ptag = `<span class="price-tag loading">載入中…</span>`;
+        } else {
+          const pstr = a.tt==='us' ? `$${p.price.toFixed(2)}` :
+                       a.tt==='cb'  ? `${p.price.toFixed(2)}元` :
+                       p.price>=1000 ? `NT$${Math.round(p.price).toLocaleString()}` : `NT$${p.price.toFixed(2)}`;
+          const cstr = p.change!=null ? `<span style="color:${p.change>=0?'var(--pos)':'var(--neg)'}"> ${p.change>=0?'▲':'▼'}${Math.abs(p.change).toFixed(2)}%</span>` : '';
+          ptag = `<span class="price-tag">${pstr}${cstr}</span>`;
+        }
+        if (a.qty) origLine = `${a.qty} ${a.tt==='crypto'?'枚':'股'}`;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'asset-card';
+      card.innerHTML = `
+        <div class="left">
+          <div class="asset-icon" style="background:${ibg}">${a.icon||cfg.icon}</div>
+          <div>
+            <div class="asset-name">${a.name}</div>
+            <div class="asset-meta">
+              ${a.note ? `<span class="asset-note">${a.note}</span>` : ''}
+              ${origLine ? `<span class="asset-note">${origLine}</span>` : ''}
+              ${ptag}
+            </div>
+          </div>
+        </div>
+        <div class="asset-right">
+          <div class="asset-amount${cat==='debt'?' debt':''}">${fmt(twdVal)}</div>
+          <div class="asset-amount-orig">${origLine && (cat==='fxcash'||cat==='overseas') ? fmtFx(a.fxAmt, a.fxCcy) : ''}</div>
+          <div class="asset-actions">
+            ${a.ticker ? `<button class="btn-icon" title="查價" onclick="lookupPrice(event,${a.id})">🔍</button>` : ''}
+            <button class="btn-icon" onclick="openModal(${a.id})">✎</button>
+            <button class="btn-icon delete" onclick="delAsset(${a.id})">✕</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  });
+}
+
+function filterGroup(cat) {
+  currentFilter = cat;
+  const tabs = ['all','cash','fxcash','overseas','invest','property','debt'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i]===cat));
+  render();
+}
+
+// ─── Modal logic ──────────────────────────────────────────────────────────────
+function setTT(tt) {
+  currentTT = tt;
+  ['Manual','Tw','Cb','Us','Crypto'].forEach(s => {
+    const el = document.getElementById('type'+s);
+    if (el) el.classList.toggle('active', s.toLowerCase()===tt);
+  });
+  document.getElementById('tickerSection').style.display = tt==='manual' ? 'none' : '';
+  document.getElementById('amountGroup').style.display   = tt==='manual' ? '' : 'none';
+  if (tt==='tw')     { document.getElementById('tickerLabel').textContent='股票代號'; document.getElementById('tickerHint').textContent='例：2330 台積電、0050、2317 鴻海'; document.getElementById('inputTicker').placeholder='2330'; document.getElementById('qtyHint').textContent='股數'; }
+  if (tt==='cb')     { document.getElementById('tickerLabel').textContent='可轉債/CBAS代號 (5碼)'; document.getElementById('tickerHint').textContent='例：37012、15142、62745（上市/上櫃代號+發行次數，共5碼）'; document.getElementById('inputTicker').placeholder='37012'; document.getElementById('qtyHint').textContent='張數（面額10萬/張）'; }
+  if (tt==='us')     { document.getElementById('tickerLabel').textContent='股票代號'; document.getElementById('tickerHint').textContent='例：AAPL, NVDA, VOO, QQQ, TSLA'; document.getElementById('inputTicker').placeholder='AAPL'; document.getElementById('qtyHint').textContent='股數'; }
+  if (tt==='crypto') { document.getElementById('tickerLabel').textContent='CoinGecko ID'; document.getElementById('tickerHint').textContent='例：bitcoin, ethereum, solana, bnb'; document.getElementById('inputTicker').placeholder='bitcoin'; document.getElementById('qtyHint').textContent='持有數量'; }
+}
+
+function onCatChange() {
+  const cat = document.getElementById('inputCategory').value;
+  const isFx = cat==='fxcash' || cat==='overseas';
+  const isInvest = cat==='invest';
+
+  document.getElementById('fxDivider').style.display     = isFx     ? '' : 'none';
+  document.getElementById('fxSection').style.display     = isFx     ? '' : 'none';
+  document.getElementById('investDivider').style.display = isInvest  ? '' : 'none';
+  document.getElementById('investSection').style.display = isInvest  ? '' : 'none';
+  document.getElementById('amountGroup').style.display   = isFx     ? 'none' : '';
+  document.getElementById('amountLabel').textContent     = '金額 (NT$)';
+
+  if (isFx) onCurrencyChange();
+  if (!isInvest) setTT('manual');
+}
+
+function onCurrencyChange() {
+  const ccy = document.getElementById('inputCurrency').value;
+  document.getElementById('customRateRow').style.display = ccy==='OTHER' ? '' : 'none';
+}
+
+function openModal(id, defaultCat) {
+  editingId = id;
+  document.getElementById('modalOverlay').classList.add('open');
+  if (id) {
+    const a = assets.find(x=>x.id===id);
+    document.getElementById('modalTitle').textContent  = '編輯資產';
+    document.getElementById('inputName').value         = a.name;
+    document.getElementById('inputCategory').value     = a.category;
+    document.getElementById('inputIcon').value         = a.icon||'';
+    document.getElementById('inputNote').value         = a.note||'';
+    document.getElementById('inputAmount').value       = a.amount||0;
+    onCatChange();
+    if (a.fxCcy) {
+      document.getElementById('inputCurrency').value   = a.fxCcy;
+      document.getElementById('inputFxAmount').value   = a.fxAmt||0;
+      if (a.fxCcy==='OTHER') document.getElementById('inputCustomRate').value = a.customRate||'';
+      onCurrencyChange();
+    }
+    if (a.ticker) { setTT(a.tt||'tw'); document.getElementById('inputTicker').value=a.ticker; document.getElementById('inputQty').value=a.qty||''; }
+  } else {
+    document.getElementById('modalTitle').textContent = '新增資產';
+    ['inputName','inputIcon','inputNote','inputTicker','inputQty','inputFxAmount','inputCustomRate'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('inputAmount').value = '';
+    document.getElementById('inputCategory').value = defaultCat||'cash';
+    setTT('manual');
+    onCatChange();
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId=null; }
+
+function saveAsset() {
+  const name = document.getElementById('inputName').value.trim();
+  if (!name) { document.getElementById('inputName').focus(); return; }
+  const category = document.getElementById('inputCategory').value;
+  const icon  = document.getElementById('inputIcon').value.trim()  || CAT[category].icon;
+  const note  = document.getElementById('inputNote').value.trim();
+  const isFx  = category==='fxcash' || category==='overseas';
+
+  let amount=0, ticker=null, tt=null, qty=null, fxCcy=null, fxAmt=null, customRate=null;
+
+  if (isFx) {
+    fxCcy  = document.getElementById('inputCurrency').value;
+    fxAmt  = parseFloat(document.getElementById('inputFxAmount').value)||0;
+    if (fxCcy==='OTHER') {
+      customRate = parseFloat(document.getElementById('inputCustomRate').value)||0;
+      amount = fxAmt * customRate;
+    } else {
+      const rate = fxRate(fxCcy);
+      amount = rate ? fxAmt * rate : 0;
+    }
+  } else if (category==='invest' && currentTT!=='manual') {
+    ticker = document.getElementById('inputTicker').value.trim();
+    qty    = parseFloat(document.getElementById('inputQty').value)||0;
+    tt     = currentTT;
+  } else {
+    amount = parseFloat(document.getElementById('inputAmount').value)||0;
+  }
+
+  const obj = { name, category, icon, note, amount, ticker, tt, qty, fxCcy, fxAmt, customRate };
+  if (editingId) {
+    const idx = assets.findIndex(a=>a.id===editingId);
+    if (idx!==-1) assets[idx] = { ...assets[idx], ...obj };
+  } else {
+    assets.push({ id:Date.now(), ...obj });
+  }
+  save(); closeModal(); render();
+  if (ticker || isFx) refreshAll();
+}
+
+function delAsset(id) {
+  if (!confirm('確定要刪除？')) return;
+  assets = assets.filter(a=>a.id!==id);
+  save(); render();
+}
+
+// ─── Currency selector listener ───────────────────────────────────────────────
+document.getElementById('inputCurrency').addEventListener('change', onCurrencyChange);
+
+
+
+// ─── Quick Price Lookup ───────────────────────────────────────────────────────
+function lookupPrice(event, id) {
+  event.stopPropagation();
+  const a = assets.find(x => x.id === id);
+  if (!a || !a.ticker) return;
+
+  // Build the lookup URL based on type
+  let url = '';
+  if (a.tt === 'tw') {
+    url = `https://tw.stock.yahoo.com/quote/${a.ticker}`;
+  } else if (a.tt === 'cb') {
+    url = `https://www.tpex.org.tw/web/bond/search/daily_trading/bond_daily_trading.php?l=zh-tw`;
+  } else if (a.tt === 'us') {
+    url = `https://finance.yahoo.com/quote/${a.ticker}`;
+  } else if (a.tt === 'crypto') {
+    url = `https://www.coingecko.com/en/coins/${a.ticker}`;
+  }
+
+  // Show quick price input dialog
+  const overlay = document.getElementById('priceOverlay');
+  const nameEl  = document.getElementById('priceAssetName');
+  const tickerEl = document.getElementById('priceTicker');
+  const hintEl  = document.getElementById('priceHint');
+  const input   = document.getElementById('priceInput');
+  const linkEl  = document.getElementById('priceLookupLink');
+
+  nameEl.textContent  = a.name;
+  tickerEl.textContent = a.ticker;
+  input.value = '';
+  input.placeholder = a.tt === 'cb' ? '例：102.50（每百元面額）' :
+                      a.tt === 'us' ? '例：131.50（美元）' :
+                      '例：2050（元）';
+
+  if (a.tt === 'cb') {
+    hintEl.textContent = '請輸入可轉債報價（每百元面額的價格）';
+  } else if (a.tt === 'us') {
+    hintEl.textContent = `請輸入美元股價，將自動換算台幣（匯率 ${(fxRates['USD']||32).toFixed(2)}）`;
+  } else {
+    hintEl.textContent = '請輸入最新收盤價（台幣）';
+  }
+
+  linkEl.href = url;
+  linkEl.textContent = a.tt === 'cb' ? '開啟 TPEx 查詢 →' :
+                       a.tt === 'us' ? '開啟 Yahoo Finance →' :
+                       a.tt === 'crypto' ? '開啟 CoinGecko →' :
+                       '開啟 Yahoo股市查詢 →';
+
+  overlay.dataset.assetId = id;
+  overlay.classList.add('open');
+  setTimeout(() => input.focus(), 300);
+}
+
+function savePriceInput() {
+  const overlay = document.getElementById('priceOverlay');
+  const id = parseInt(overlay.dataset.assetId);
+  const input = document.getElementById('priceInput');
+  const price = parseFloat(input.value);
+
+  if (isNaN(price) || price <= 0) {
+    input.style.borderColor = 'var(--neg)';
+    return;
+  }
+
+  const a = assets.find(x => x.id === id);
+  if (!a) return;
+
+  // Store in stockPrices cache and update amount
+  if (a.tt === 'cb') {
+    stockPrices[a.ticker] = { price, change: null, currency: 'TWD' };
+    a.amount = (price / 100) * a.qty * 100000;
+  } else if (a.tt === 'us') {
+    stockPrices[a.ticker] = { price, change: null, currency: 'USD' };
+    a.amount = price * a.qty * (fxRates['USD'] || 32);
+  } else if (a.tt === 'crypto') {
+    stockPrices[a.ticker] = { price: price * a.qty, change: null, currency: 'TWD' };
+    a.amount = price * a.qty;
+  } else {
+    // tw stock
+    stockPrices[a.ticker] = { price, change: null, currency: 'TWD' };
+    a.amount = price * a.qty;
+  }
+
+  save();
+  closePriceOverlay();
+  render();
+}
+
+function closePriceOverlay() {
+  document.getElementById('priceOverlay').classList.remove('open');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('dateDisplay').textContent =
+  new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'long'});
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+render();
+refreshAll();
+setInterval(refreshAll, 5*60*1000);
+
+// Show setup banner if first time and opened from file
+if (!localStorage.getItem('bannerDismissed')) {
+  document.getElementById('setupBanner').style.display = 'block';
+}
+</script>
+
+<!-- Quick Price Input Overlay -->
+<div class="modal-overlay" id="priceOverlay">
+  <div class="modal" style="max-width:400px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--accent)" id="priceAssetName">資產名稱</div>
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:6px;border:1px solid var(--border)" id="priceTicker"></div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <a id="priceLookupLink" target="_blank" 
+         style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:rgba(245,216,122,.12);border:1px solid rgba(245,216,122,.3);border-radius:8px;color:var(--accent);font-family:'DM Mono',monospace;font-size:13px;text-decoration:none">
+        🔗 開啟查詢頁面 →
+      </a>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px">點上方連結查到最新價格後，回來輸入</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">輸入最新價格</label>
+      <input class="form-input" id="priceInput" type="number" step="0.01" min="0"
+             onkeydown="if(event.key==='Enter')savePriceInput()"
+             oninput="this.style.borderColor=''">
+      <div class="form-hint" id="priceHint" style="margin-top:6px"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closePriceOverlay()">取消</button>
+      <button class="btn btn-primary" onclick="savePriceInput()">更新價格</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
